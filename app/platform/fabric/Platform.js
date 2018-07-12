@@ -125,8 +125,15 @@ class Platform {
   // set up the client and channel objects for each org
   async initialize() {
     for (let key of configuration.getOrgs()) {
+
+      //DEBUG
+      //logger.info("key=", key)
+
       let client = new hfc();
       let cryptoSuite = hfc.newCryptoSuite();
+
+      //Set Mutual TLS
+      this.setMutualTLS(key, client);
 
       var store = await hfc.newDefaultKeyValueStore({
         path: configuration.getKeyStoreForOrg(configuration.getOrgName(key))
@@ -151,6 +158,32 @@ class Platform {
     await this.setChannels();
   }
 
+  //Set up mutual tls for client.
+  setMutualTLS(org, client) {
+      let clientCert, clientKey;
+      if (configuration.getOrg(org)["client_cert"] != undefined) {
+          clientCert = fs.readFileSync(
+              configuration.getOrg(org)["client_cert"]
+          );
+      }
+      if (configuration.getOrg(org)["client_key"] != undefined) {
+          clientKey = fs.readFileSync(
+              configuration.getOrg(org)["client_key"]
+          );
+      }
+
+      if (clientCert == "" || clientKey == "") {
+          logger.error("No client cert or key found.");
+          return;
+      }
+
+      //DEBUG
+      //logger.info("clientCert=", Buffer.from(clientCert).toString());
+      //logger.info("clientKey=", Buffer.from(clientKey).toString());
+
+      client.setTlsClientCertAndKey(Buffer.from(clientCert).toString(), Buffer.from(clientKey).toString());
+  }
+
   setupPeers(org, client, isReturn) {
     configuration.getPeersByOrg(org).forEach(key => {
       let peer;
@@ -158,12 +191,18 @@ class Platform {
         let data = fs.readFileSync(
           configuration.getOrg(org)[key]["tls_cacerts"]
         );
-        peer = client.newPeer(configuration.getOrg(org)[key].requests, {
+
+        //Set Mutual TLS
+        let options = {
           pem: Buffer.from(data).toString(),
-          "ssl-target-name-override": configuration.getOrg(org)[key][
-            "server-hostname"
-          ]
-        });
+          "ssl-target-name-override": configuration.getOrg(org)[key]["server-hostname"]
+        };
+        client.addTlsClientCertAndKey(options);
+        peer = client.newPeer(
+            configuration.getOrg(org)[key].requests,
+            options
+        );
+
         this.addStatusPeer(org, key,configuration.getOrg(org)[key].requests, {
           pem: Buffer.from(data).toString(),
           "ssl-target-name-override": configuration.getOrg(org)[key][

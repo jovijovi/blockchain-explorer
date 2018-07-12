@@ -22,7 +22,13 @@ class Explorer {
         this.app.use(compression());
         this.persistence = {};
         this.platforms = explorerconfig["platforms"];
-
+        this.app.all('*', function(req, res, next) {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS');
+            res.header("Access-Control-Allow-Headers", "X-Requested-With");
+            res.header('Access-Control-Allow-Headers', 'Content-Type');
+            next();
+        });
     }
 
     getApp() {

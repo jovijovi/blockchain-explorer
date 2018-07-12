@@ -71,9 +71,9 @@ CREATE TABLE peer (
   org integer DEFAULT NULL,
   name varchar(64) DEFAULT NULL,
   mspid varchar(64) DEFAULT NULL,
-  requests varchar(64) DEFAULT NULL,
-  events varchar(64) DEFAULT NULL,
-  server_hostname varchar(64) DEFAULT NULL,
+  requests varchar(256) DEFAULT NULL,
+  events varchar(256) DEFAULT NULL,
+  server_hostname varchar(256) DEFAULT NULL,
   createdt timestamp DEFAULT NULL
 );
 ALTER table peer owner to hppoc;
@@ -100,8 +100,8 @@ DROP TABLE IF EXISTS orderer;
 
 CREATE TABLE orderer (
   id SERIAL PRIMARY KEY,
-  requests varchar(64) DEFAULT NULL,
-  server_hostname varchar(64) DEFAULT NULL,
+  requests varchar(256) DEFAULT NULL,
+  server_hostname varchar(256) DEFAULT NULL,
   createdt timestamp DEFAULT NULL
 );
 ALTER table orderer owner to hppoc;
