@@ -133,7 +133,7 @@ class Platform {
       let cryptoSuite = hfc.newCryptoSuite();
 
       //Set Mutual TLS
-      this.setMutualTLS(key, client);
+      this.setPeerMutualTLS(key, client);
 
       var store = await hfc.newDefaultKeyValueStore({
         path: configuration.getKeyStoreForOrg(configuration.getOrgName(key))
@@ -158,8 +158,8 @@ class Platform {
     await this.setChannels();
   }
 
-  //Set up mutual tls for client.
-  setMutualTLS(org, client) {
+  //Set up mutual tls for peer client.
+  setPeerMutualTLS(org, client) {
       let clientCert, clientKey;
       if (configuration.getOrg(org)["client_cert"] != undefined) {
           clientCert = fs.readFileSync(
@@ -184,6 +184,24 @@ class Platform {
       client.setTlsClientCertAndKey(Buffer.from(clientCert).toString(), Buffer.from(clientKey).toString());
   }
 
+    //Set up mutual tls for orderer client.
+    setOrdererMutualTLS(certPath, keyPath, client) {
+        if (certPath == "" || keyPath == "") {
+            logger.error("No client cert or key path found.");
+            return;
+        }
+
+        var clientCert = fs.readFileSync(certPath);
+        var clientKey = fs.readFileSync(keyPath);
+
+        if (clientCert == "" || clientKey == "") {
+            logger.error("No client cert or key found.");
+            return;
+        }
+
+        client.setTlsClientCertAndKey(Buffer.from(clientCert).toString(), Buffer.from(clientKey).toString());
+    }
+
   setupPeers(org, client, isReturn) {
     configuration.getPeersByOrg(org).forEach(key => {
       let peer;
@@ -199,16 +217,16 @@ class Platform {
         };
         client.addTlsClientCertAndKey(options);
         peer = client.newPeer(
-            configuration.getOrg(org)[key].requests,
-            options
+          configuration.getOrg(org)[key].requests,
+          options
         );
 
-        this.addStatusPeer(org, key,configuration.getOrg(org)[key].requests, {
-          pem: Buffer.from(data).toString(),
-          "ssl-target-name-override": configuration.getOrg(org)[key][
-            "server-hostname"
-          ]
-        });
+        this.addStatusPeer(
+          org,
+          key,
+          configuration.getOrg(org)[key].requests,
+          options
+        );
       } else {
         peer = client.newPeer(configuration.getOrg(org)[key].requests);
         this.addStatusPeer(org, key,configuration.getOrg(org)[key].requests);
@@ -216,6 +234,9 @@ class Platform {
 
       this.peers[[org, key]] = peer;
     });
+
+    //DEBUG
+    //logger.info("### peers=", this.peers);
   }
 
   async setChannels() {
@@ -224,10 +245,25 @@ class Platform {
     var proxy = this.getDefaultProxy();
     var channelInfo = await proxy.queryChannels();
 
+    //DEBUG
+    //logger.info("### channelInfo=", channelInfo);
+    //logger.info("### this.getDefaultPeer()=", this.getDefaultPeer());
+    //logger.info("### this.peers=", this.peers);
+
     channelInfo.channels.forEach(chan => {
       var channelName = chan.channel_id;
       let channel = client.newChannel(channelName);
-      channel.addPeer(this.getDefaultPeer());
+
+      //ADD ALL PEERS from config.json TO current CHANNEL?
+      configuration.getOrgs().forEach(org => {
+          configuration.getPeersByOrg(org).forEach(key => {
+              var peer = this.getPeerObject(org, key);
+              channel.addPeer(peer);
+          });
+      });
+
+      //channel.addPeer(this.getDefaultPeer());
+
       this.setupOrderers(client,channel);
       var channel_event_hub = channel.newChannelEventHub(this.getDefaultPeer());
       this.channels[channelName] = new FabricChannel(
@@ -244,9 +280,29 @@ class Platform {
       let orderer;
       if (val.tls_cacerts != undefined) {
         let data = fs.readFileSync(val.tls_cacerts);
-        orderer = client.newOrderer(val.requests, {
-          pem: Buffer.from(data).toString(),"ssl-target-name-override": val["server-hostname"]
-          });
+
+        //Set Mutual TLS
+        var ordererClient = client;
+        this.setOrdererMutualTLS(val["client_cert"], val["client_key"], ordererClient);
+
+        let options = {
+          pem: Buffer.from(data).toString(),
+          "ssl-target-name-override": val["server-hostname"]
+        };
+
+        ordererClient.addTlsClientCertAndKey(options);
+
+        //DEBUG
+        //logger.info("setupOrderers,options=", options);
+
+        orderer = ordererClient.newOrderer(
+          val.requests,
+          options
+        );
+
+        //orderer = client.newOrderer(val.requests, {
+        //  pem: Buffer.from(data).toString(),"ssl-target-name-override": val["server-hostname"]
+        //  });
       } else {
         orderer = client.newOrderer(val.requests);
       }
