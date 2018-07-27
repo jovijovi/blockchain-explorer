@@ -270,6 +270,67 @@ const dbroutes = (app, persist) => {
     }
   });
 
+  /**
+
+    Get blocks by time
+    GET /api/blocksByTime
+    curl -i 'http://<host>:<port>/api/blocksByTime/<channel>/<start>/<end>/<pagesize>/<pagenum>'
+    Response:
+   {
+       "status": 200,
+       "genesisBlock": [
+           {
+               "blocknum": 0,
+               "txcount": 1,
+               "createdt": "2018-07-27T03:08:11.000Z",
+               "blockhash": "30abc90f41ccf96e34a4f63ec596378948eaef75599f6c4ca83bffec3c2eb46d"
+           }
+       ],
+       "rows": [
+           {
+               "blocknum": 0,
+               "txcount": 1,
+               "createdt": "2018-07-27T03:08:11.000Z",
+               "blockhash": "30abc90f41ccf96e34a4f63ec596378948eaef75599f6c4ca83bffec3c2eb46d"
+           }
+       ]
+   }
+
+  */
+
+  app.get('/api/blocksByTime/:channel/:start/:end/:pagesize/:pagenum', function (req, res) {
+    // Check params
+    if (!req.params.channel || isNaN(req.params.start) || isNaN(req.params.end)
+        || isNaN(req.params.pagesize) || isNaN(req.params.pagenum)) {
+      return requtil.invalidRequest(req, res);
+    }
+
+    const channelName = req.params.channel;
+    const start = parseInt(req.params.start);
+    const end = parseInt(req.params.end);
+    const pagesize = parseInt(req.params.pagesize);
+    const pagenum = parseInt(req.params.pagenum);
+
+    // Check params
+    if (start <= 0 || end <= 0 || pagesize <= 0 || pagenum <= 0) {
+      return requtil.invalidRequest(req, res);
+    }
+
+    let genesisBlock;
+    statusMetrics.getGenesisBlockFromDB(channelName).then(rows => {
+      if (rows) {
+        genesisBlock = rows;
+      }
+    });
+
+    statusMetrics.getBlocksByTime(channelName, start, end, pagesize, pagenum).then(rows => {
+      if (rows) {
+        return res.send({ status: 200, genesisBlock, rows });
+      }
+      return requtil.notFound(req, res);
+    });
+  });
+
   /***
    Transactions by Organization(s)
   GET /api/txByOrg

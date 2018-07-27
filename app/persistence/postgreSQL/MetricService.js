@@ -238,6 +238,41 @@ class MetricService {
 
     // block metrics API
 
+    getGenesisBlockFromDB(channelName) {
+        let sqlGenesisBlock = ` select blocknum, txcount, createdt, blockhash
+            from blocks
+            where genesis_block_hash = '${channelName}'
+              and blocknum = 0
+            ; `;
+
+        logger.info("sqlGenesisBlock=", sqlGenesisBlock);
+
+        return sql.getRowsBySQlQuery(sqlGenesisBlock);
+    }
+
+    getBlocksByTime(channelName, start, end, pagesize, pagenum) {
+        // select blocknum, txcount, createdt, blockhash
+        // from blocks
+        // where genesis_block_hash = '87dafea1872f64a6ff20b1c728c81d000a40ffa28f3193ab8ba84907a38d3c3f'
+        // and createdt >= '20180725'
+        // and createdt < '20180727'
+        // and blocknum <= (select max(blocknum) from blocks where genesis_block_hash = '87dafea1872f64a6ff20b1c728c81d000a40ffa28f3193ab8ba84907a38d3c3f')-10*(1-1)
+        // order by blocknum desc
+        // limit 10;
+        let sqlByTime = ` select blocknum, txcount, createdt, blockhash
+            from blocks
+            where genesis_block_hash = '${channelName}'
+              and createdt >= '${start}'
+              and createdt < '${end}'
+              and blocknum <= (select max(blocknum) from blocks where genesis_block_hash = '${channelName}')-${pagesize}*(${pagenum}-1)
+            order by blocknum desc
+            limit ${pagesize} ; `;
+
+        logger.info("sqlByTime=", sqlByTime);
+
+        return sql.getRowsBySQlQuery(sqlByTime);
+    }
+
     getBlocksByMinute(channelName, hours) {
       let sqlPerMinute = ` with minutes as (
             select generate_series(
