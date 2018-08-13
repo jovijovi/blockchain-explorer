@@ -323,9 +323,16 @@ const dbroutes = (app, persist) => {
       }
     });
 
+    let count;
+    statusMetrics.getBlockCountByTime(channelName, start, end).then(rows => {
+      if (rows) {
+        count = rows;
+      }
+    });
+
     statusMetrics.getBlocksByTime(channelName, start, end, pagesize, pagenum).then(rows => {
       if (rows) {
-        return res.send({ status: 200, genesisBlock, rows });
+        return res.send({ status: 200, genesisBlock, count, rows });
       }
       return requtil.notFound(req, res);
     });

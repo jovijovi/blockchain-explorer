@@ -250,12 +250,31 @@ class MetricService {
         return sql.getRowsBySQlQuery(sqlGenesisBlock);
     }
 
+    getBlockCountByTime(channelName, start, end) {
+        // select count(1)
+        // from blocks
+        // where genesis_block_hash = '87dafea1872f64a6ff20b1c728c81d000a40ffa28f3193ab8ba84907a38d3c3f'
+        // and createdt >= '20180725'
+        // and createdt <= '20180727'
+        // ;
+        let sqlCountByTime = ` select count(1)
+            from blocks
+            where genesis_block_hash = '${channelName}'
+              and createdt >= '${start}'
+              and createdt <= '${end}'
+              ; `;
+
+        logger.info("sqlCountByTime=", sqlCountByTime);
+
+        return sql.getRowsBySQlQuery(sqlCountByTime);
+    }
+
     getBlocksByTime(channelName, start, end, pagesize, pagenum) {
         // select blocknum, txcount, createdt, blockhash
         // from blocks
         // where genesis_block_hash = '87dafea1872f64a6ff20b1c728c81d000a40ffa28f3193ab8ba84907a38d3c3f'
         // and createdt >= '20180725'
-        // and createdt < '20180727'
+        // and createdt <= '20180727'
         // and blocknum <= (select max(blocknum) from blocks where genesis_block_hash = '87dafea1872f64a6ff20b1c728c81d000a40ffa28f3193ab8ba84907a38d3c3f')-10*(1-1)
         // order by blocknum desc
         // limit 10;
@@ -263,7 +282,7 @@ class MetricService {
             from blocks
             where genesis_block_hash = '${channelName}'
               and createdt >= '${start}'
-              and createdt < '${end}'
+              and createdt <= '${end}'
               and blocknum <= (select max(blocknum) from blocks where genesis_block_hash = '${channelName}')-${pagesize}*(${pagenum}-1)
             order by blocknum desc
             limit ${pagesize} ; `;
