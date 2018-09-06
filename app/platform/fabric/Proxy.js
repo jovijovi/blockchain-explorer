@@ -230,7 +230,11 @@ class Proxy {
 	async queryChannels() {
 
 		try {
-			var channelInfo = await this.client.queryChannels(this.target);
+			var channelInfo = await this.client.queryChannels(this.target)
+				.catch(function (rej) {
+                     logger.error(rej.message);
+                     return null
+            });
 			if (channelInfo) {
 				return channelInfo;
 			} else {

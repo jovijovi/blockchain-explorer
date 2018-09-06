@@ -240,6 +240,29 @@ class Platform {
   }
 
   async setChannels() {
+    // Check whether org is null
+    var orgsKey = configuration.getOrgs();
+    for (let i = 0; i < orgsKey.length; i++) {
+      var org = Object.keys(configuration.networkConfig)[i];
+
+      // Set org to DefaultOrg
+      configuration.setDefaultOrg(org);
+      logger.info("### org=", org);
+      logger.info("### DefaultOrg=", configuration.getDefaultOrg());
+
+      var testProxy = this.getDefaultProxy();
+      var testChannelInfo = await testProxy.queryChannels();
+      logger.info("### channelInfo=", testChannelInfo);
+
+      if (testChannelInfo == 'response_payloads is null') {
+        logger.info("### channelInfo is null.");
+        continue
+      }
+
+      logger.info("### channelInfo is good.");
+      break;
+    }
+
     var client = this.getClientForOrg(configuration.getDefaultOrg());
 
     var proxy = this.getDefaultProxy();

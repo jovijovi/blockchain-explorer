@@ -15,6 +15,11 @@ class Configuration {
     this.networkConfig = config["network-config"];
   }
 
+  // Set Default Org
+  setDefaultOrg(org) {
+      defaultOrg = org
+  }
+
   getDefaultOrg() {
     if (defaultOrg == undefined) {
       defaultOrg = Object.keys(this.networkConfig)[0];
