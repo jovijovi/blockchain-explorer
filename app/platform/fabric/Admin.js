@@ -119,26 +119,27 @@ var Admin = class extends Remote {
         // The rpc specification on the peer side is:
         //     rpc ProcessProposal(Proposal) returns (ProposalResponse) {}
         return new Promise(function(resolve, reject) {
-            var send_timeout = setTimeout(function(){
-                logger.error('GetStatus - timed out after:%s', rto);
-                return reject(new Error('REQUEST_TIMEOUT'));
-            }, rto);
+            //var send_timeout = setTimeout(function(){
+            //    logger.error('GetStatus - timed out after:%s', rto);
+            //    return reject(new Error('REQUEST_TIMEOUT'));
+            //}, rto);
 
-            self._endorserClient.GetStatus({}, function(err, serverStatus) {
-                clearTimeout(send_timeout);
-                if (err) {
-                    logger.debug('Error GetStatus response from: %s status: %s',self._url, err);
-                    if(err instanceof Error) {
-                            resolve({"status":"DOWN","server_hostname" : self._options["grpc.ssl_target_name_override"]});
-                        }
-                        else {
-                            resolve({"status":"DOWN","server_hostname" : self._options["grpc.ssl_target_name_override"]});
-                    }
-                } else {
-                    logger.debug('Received GetStatus response from peer "%s": status - %s', self._url, JSON.stringify(serverStatus));
+            //self._endorserClient.GetStatus({}, function(err, serverStatus) {
+                //clearTimeout(send_timeout);
+                //Disable for temp. 2018/08/21
+                //if (err) {
+                //    logger.debug('Error GetStatus response from: %s status: %s',self._url, err);
+                //    if(err instanceof Error) {
+                //            resolve({"status":"DOWN","server_hostname" : self._options["grpc.ssl_target_name_override"]});
+                //        }
+                //        else {
+                //            resolve({"status":"DOWN","server_hostname" : self._options["grpc.ssl_target_name_override"]});
+                //    }
+                //} else {
+                    //logger.debug('Received GetStatus response from peer "%s": status - %s', self._url, JSON.stringify(serverStatus));
                     resolve({"status":"RUNNING","server_hostname" : self._options["grpc.ssl_target_name_override"]});
-                }
-            });
+                //}
+            //});
         });
     }
 
