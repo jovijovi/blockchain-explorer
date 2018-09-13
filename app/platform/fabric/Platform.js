@@ -11,6 +11,7 @@ var FabricChannel = require("./FabricChannel.js");
 var Proxy = require("./Proxy.js");
 var hfc = require("fabric-client");
 var Admin = require("./Admin.js");
+var peerOrgConfig = require('./PeerOrgs.js');
 hfc.addConfigFile(path.join(__dirname, "./config.json"));
 
 class Platform {
@@ -108,8 +109,13 @@ class Platform {
         var promises = [];
         Object.keys(this.peersStatus).forEach(peer => {
           var client = this.peersStatus[[peer]];
-          var psPromise = client.GetStatus(client._options["grpc.ssl_target_name_override"]);
-          promises.push(psPromise);
+          console.log(channelName);
+          console.log(client._options["grpc.ssl_target_name_override"]);
+          if (peerOrgConfig.findPeerStatus(client._options["grpc.ssl_target_name_override"])) {
+            var psPromise = client.GetStatus(client._options["grpc.ssl_target_name_override"]);
+            promises.push(psPromise);
+            console.log("PUSH!");
+          }
         });
         Promise.all(promises).then(function(successMessage){
           logger.debug("GetStatus All!" , successMessage);
@@ -181,7 +187,7 @@ class Platform {
       //logger.info("clientCert=", Buffer.from(clientCert).toString());
       //logger.info("clientKey=", Buffer.from(clientKey).toString());
 
-      client.setTlsClientCertAndKey(Buffer.from(clientCert).toString(), Buffer.from(clientKey).toString());
+      //client.setTlsClientCertAndKey(Buffer.from(clientCert).toString(), Buffer.from(clientKey).toString());
   }
 
     //Set up mutual tls for orderer client.
@@ -243,23 +249,23 @@ class Platform {
     // Check whether org is null
     var orgsKey = configuration.getOrgs();
     for (let i = 0; i < orgsKey.length; i++) {
-      var org = Object.keys(configuration.networkConfig)[i];
+      var testOrg = Object.keys(configuration.networkConfig)[i];
 
       // Set org to DefaultOrg
-      configuration.setDefaultOrg(org);
-      logger.info("### org=", org);
-      logger.info("### DefaultOrg=", configuration.getDefaultOrg());
+      configuration.setDefaultOrg(testOrg);
+      logger.info('### org=', testOrg);
+      logger.info('### DefaultOrg=', configuration.getDefaultOrg());
 
       var testProxy = this.getDefaultProxy();
       var testChannelInfo = await testProxy.queryChannels();
-      logger.info("### channelInfo=", testChannelInfo);
+      logger.info('### channelInfo=', testChannelInfo);
 
-      if (testChannelInfo == 'response_payloads is null') {
-        logger.info("### channelInfo is null.");
-        continue
+      if (testChannelInfo === 'response_payloads is null') {
+        logger.info('### channelInfo is null.');
+        continue;
       }
 
-      logger.info("### channelInfo is good.");
+      logger.info('### channelInfo is good.');
       break;
     }
 
@@ -268,31 +274,33 @@ class Platform {
     var proxy = this.getDefaultProxy();
     var channelInfo = await proxy.queryChannels();
 
-    //DEBUG
-    //logger.info("### channelInfo=", channelInfo);
-    //logger.info("### this.getDefaultPeer()=", this.getDefaultPeer());
-    //logger.info("### this.peers=", this.peers);
+    // DEBUG
+    // logger.info("### channelInfo=", channelInfo);
+    // logger.info("### this.getDefaultPeer()=", this.getDefaultPeer());
+    // logger.info("### this.peers=", this.peers);
 
     channelInfo.channels.forEach(chan => {
       var channelName = chan.channel_id;
       let channel = client.newChannel(channelName);
 
-      //ADD ALL PEERS from config.json TO current CHANNEL?
+      // ADD ALL PEERS from config.json TO current CHANNEL?
       configuration.getOrgs().forEach(org => {
-          configuration.getPeersByOrg(org).forEach(key => {
-              var peer = this.getPeerObject(org, key);
-              channel.addPeer(peer);
-          });
+        configuration.getPeersByOrg(org).forEach(key => {
+          var peer = this.getPeerObject(org, key);
+          if (peerOrgConfig.find(channelName, peer._options["grpc.ssl_target_name_override"])) {
+            channel.addPeer(peer);
+          }
+        });
       });
 
-      //channel.addPeer(this.getDefaultPeer());
+      // channel.addPeer(this.getDefaultPeer());
 
       this.setupOrderers(client,channel);
       var channel_event_hub = channel.newChannelEventHub(this.getDefaultPeer());
       this.channels[channelName] = new FabricChannel(
         channelName,
         channel,
-        channel_event_hub
+        channel_event_hub,
       );
     });
   }

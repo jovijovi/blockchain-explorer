@@ -17,7 +17,7 @@ class Configuration {
 
   // Set Default Org
   setDefaultOrg(org) {
-      defaultOrg = org
+      defaultOrg = org;
   }
 
   getDefaultOrg() {
