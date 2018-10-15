@@ -406,7 +406,7 @@ function getRowsBySQlQuery(sql) {
       }
       logger.debug(` the getRowsBySQlQuery ${sql}`);
 
-      if (!res.rows || res.rows.length == 0) resolve(null);
+      if (!res.rows || res.rows.length === 0) resolve(null);
       else resolve(res.rows);
     });
   });

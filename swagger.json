@@ -950,6 +950,56 @@
                 }
             }
         },
+        "/txByDay/{channelName}/{days}": {
+            "get": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Query to Get Trasaction By Day",
+                "description": "Queryto  Get Trasaction BY Day",
+                "parameters": [
+                    {
+                        "name": "channelName",
+                        "in": "path",
+                        "description": "genesis_block_hash",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "days",
+                        "in": "path",
+                        "description": "days",
+                        "required": true,
+                        "type": "number"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "status": {
+                                    "type": "number"
+                                },
+                                "rows": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/TxCount"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
         "/blocksByMinute/{channelName}/{hours}": {
             "get": {
                 "tags": [
@@ -1050,6 +1100,56 @@
                 }
             }
         },
+        "/blocksByDay/{channelName}/{days}": {
+            "get": {
+                "tags": [
+                    "Blocks"
+                ],
+                "summary": "Query to Get Blocks By Day",
+                "description": "Query to Get Blocks By Day",
+                "parameters": [
+                    {
+                        "name": "channelName",
+                        "in": "path",
+                        "description": "genesis_block_hash",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "days",
+                        "in": "path",
+                        "description": "days",
+                        "required": true,
+                        "type": "number"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "status": {
+                                    "type": "number"
+                                },
+                                "rows": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/BlockCount"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
         "/blocksByTime/{channelName}/{start}/{end}/{pagesize}/{pagenum}": {
             "get": {
                 "tags": [
@@ -1089,7 +1189,7 @@
                     {
                         "name": "pagenum",
                         "in": "path",
-                        "description": "page size",
+                        "description": "page number",
                         "required": true,
                         "type": "number"
                     }
@@ -1113,6 +1213,120 @@
                                     "type": "array",
                                     "items": {
                                         "$ref": "#/definitions/BlocksInfo"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/blocksCountByTime/{channelName}/{start}/{end}": {
+            "get": {
+                "tags": [
+                    "Blocks"
+                ],
+                "summary": "Query to Get Blocks Count By Time",
+                "description": "Query to Get Blocks Count By Time",
+                "parameters": [
+                    {
+                        "name": "channelName",
+                        "in": "path",
+                        "description": "genesis_block_hash",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "start",
+                        "in": "path",
+                        "description": "start time",
+                        "required": true,
+                        "type": "number"
+                    },
+                    {
+                        "name": "end",
+                        "in": "path",
+                        "description": "end time",
+                        "required": true,
+                        "type": "number"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "status": {
+                                    "type": "number"
+                                },
+                                "count": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/Count"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/txCountByTime/{channelName}/{start}/{end}": {
+            "get": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Query to Get Transactions Count By Time",
+                "description": "Query to Get Transactions Count By Time",
+                "parameters": [
+                    {
+                        "name": "channelName",
+                        "in": "path",
+                        "description": "genesis_block_hash",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "start",
+                        "in": "path",
+                        "description": "start time",
+                        "required": true,
+                        "type": "number"
+                    },
+                    {
+                        "name": "end",
+                        "in": "path",
+                        "description": "end time",
+                        "required": true,
+                        "type": "number"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "status": {
+                                    "type": "number"
+                                },
+                                "count": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/Count"
                                     }
                                 }
                             }
@@ -1164,6 +1378,103 @@
                                                 "type": "string"
                                             }
                                         }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/txByTime/{channelName}/{start}/{end}/{pagesize}/{pagenum}/{objectName}/{chaincodeName}": {
+            "get": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Query to Get Transactions By Time",
+                "description": "Query to Get Transactions By Time",
+                "parameters": [
+                    {
+                        "name": "channelName",
+                        "in": "path",
+                        "description": "genesis_block_hash",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "start",
+                        "in": "path",
+                        "description": "start time",
+                        "required": true,
+                        "type": "number"
+                    },
+                    {
+                        "name": "end",
+                        "in": "path",
+                        "description": "end time",
+                        "required": true,
+                        "type": "number"
+                    },
+                    {
+                        "name": "pagesize",
+                        "in": "path",
+                        "description": "page size",
+                        "required": true,
+                        "type": "number"
+                    },
+                    {
+                        "name": "pagenum",
+                        "in": "path",
+                        "description": "page number",
+                        "required": true,
+                        "type": "number"
+                    },
+                    {
+                        "name": "objectName",
+                        "in": "path",
+                        "description": "object name (optional param)",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "chaincodeName",
+                        "in": "path",
+                        "description": "chaincode name (optional param)",
+                        "required": false,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "status": {
+                                    "type": "number"
+                                },
+                                "genesisBlock": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/BlocksInfo"
+                                    }
+                                },
+                                "count": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/Count"
+                                    }
+                                },
+                                "rows": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/TxMetadata"
                                     }
                                 }
                             }
@@ -1350,6 +1661,17 @@
                 }
             }
         },
+        "BlockCount": {
+            "type": "object",
+            "properties": {
+                "datetime": {
+                    "type": "string"
+                },
+                "count": {
+                    "type": "string"
+                }
+            }
+        },
         "TxCount": {
             "type": "object",
             "properties": {
@@ -1388,19 +1710,63 @@
                     "type": "string"
                 }
             }
+        },
+        "Count": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "string"
+                }
+            }
+        },
+        "TxMetadata": {
+            "type": "object",
+            "properties": {
+                "blockid": {
+                    "type": "number"
+                },
+                "txhash": {
+                    "type": "string"
+                },
+                "createdt": {
+                    "type": "string"
+                },
+                "chaincodename": {
+                    "type": "string"
+                },
+                "genesis_block_hash": {
+                    "type": "string"
+                },
+                "creator_msp_id": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "type": "object",
+                    "properties": {
+                        "userId": {
+                            "type": "string"
+                        },
+                        "accessKey": {
+                            "type": "string"
+                        },
+                        "objectName": {
+                            "type": "string"
+                        },
+                        "objectVersionId": {
+                            "type": "string"
+                        },
+                        "fingerprint": {
+                            "type": "string"
+                        },
+                        "md5sum": {
+                            "type": "string"
+                        },
+                        "lastModified": {
+                            "type": "number"
+                        }
+                    }
+                }
+            }
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

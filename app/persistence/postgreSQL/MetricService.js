@@ -236,6 +236,161 @@ class MetricService {
       return sql.getRowsBySQlQuery(sqlPerYear);
     }
 
+    getTxCountByTimePeriod(channelName, start, end) {
+        let sqlTxCountByTimePeriod = `
+            select count(1)
+            from transactions
+            where genesis_block_hash = '${channelName}'
+              and createdt >= '${start}'
+              and createdt < '${end}'
+            ;`;
+
+        logger.info('sqlTxCountByTimePeriod=', sqlTxCountByTimePeriod);
+
+        return sql.getRowsBySQlQuery(sqlTxCountByTimePeriod);
+    }
+
+    getTxCountByTime(channelName, start, end, chaincodeName, objectName) {
+        // select count(1)
+        //        from (
+        //             with transactions as (
+        //             select (trim (both '"' from (replace((replace(write_set::text,'\u0000','')::json->0->'set'->0->'value')::text, '\', '')))::json->'objectName')::text as objectName,
+        //                    (trim (both '"' from (replace((replace(write_set::text,'\u0000','')::json->0->'set'->0->'value')::text, '\', '')))::json->'userId')::text as userId
+        //                    from transactions
+        //                    where genesis_block_hash = 'cd459dc0fafdd5902c7c51f9276e910b24b2db0cab001b85a1646a140552caf0'
+        //                    and chaincodename = 'fingerprint3'
+        //                    and createdt >= '20180816'
+        //                    and createdt < '20180917'
+        //                    --and trim (both '"' from (replace((replace(write_set::text,'\u0000','')::json->0->'set'->0->'value')::text, '\', '')))::jsonb @> '{"objectName": "testfile.txt"}'::jsonb
+        //                    )
+        //             select distinct on (transactions.objectName, transactions.userId) 1
+        //                    from transactions
+        //                    order by transactions.objectName, transactions.userId desc
+        //        ) as t
+        //        ;
+        let sqlTxCountByTime;
+        if (objectName === undefined || objectName === '' || objectName === null) {
+            sqlTxCountByTime = `
+            select count(1)
+                   from (
+                         with transactions as (
+                         select (trim (both '"' from (replace((replace(write_set::text,'\\u0000','')::json->0->'set'->0->'value')::text, '\\', '')))::json->'objectName')::text as objectName,
+                                (trim (both '"' from (replace((replace(write_set::text,'\\u0000','')::json->0->'set'->0->'value')::text, '\\', '')))::json->'userId')::text as userId
+                                from transactions
+                                where genesis_block_hash = '${channelName}'
+                                and chaincodename = '${chaincodeName}'
+                                and createdt >= '${start}'
+                                and createdt < '${end}'
+                                )
+                         select distinct on (transactions.objectName, transactions.userId) 1
+                                from transactions
+                                order by transactions.objectName, transactions.userId desc
+                    ) as t
+            ;`;
+        } else {
+            sqlTxCountByTime = `
+            select count(1)
+                   from (
+                         with transactions as (
+                         select (trim (both '"' from (replace((replace(write_set::text,'\\u0000','')::json->0->'set'->0->'value')::text, '\\', '')))::json->'objectName')::text as objectName,
+                                (trim (both '"' from (replace((replace(write_set::text,'\\u0000','')::json->0->'set'->0->'value')::text, '\\', '')))::json->'userId')::text as userId
+                                from transactions
+                                where genesis_block_hash = '${channelName}'
+                                and chaincodename = '${chaincodeName}'
+                                and createdt >= '${start}'
+                                and createdt < '${end}'
+                                and trim (both '"' from (replace((replace(write_set::text,'\\u0000','')::json->0->'set'->0->'value')::text, '\\', '')))::jsonb @> '{"objectName": "${objectName}"}'::jsonb
+                                )
+                         select distinct on (transactions.objectName, transactions.userId) 1
+                                from transactions
+                                order by transactions.objectName, transactions.userId desc
+                    ) as t
+            ;`;
+        }
+
+        logger.info('sqlTxCountByTime=', sqlTxCountByTime);
+
+        return sql.getRowsBySQlQuery(sqlTxCountByTime);
+    }
+
+    getTxByTime(channelName, start, end, pagesize, pagenum, objectName, chaincodeName) {
+        // with transactions as (
+        //      select blockid, txhash, createdt, chaincodename, genesis_block_hash, creator_msp_id, write_set,
+        //             (trim (both '"' from (replace((replace(write_set::text,'\u0000','')::json->0->'set'->0->'value')::text, '\', '')))::json->'objectName')::text as objectName,
+        //             (trim (both '"' from (replace((replace(write_set::text,'\u0000','')::json->0->'set'->0->'value')::text, '\', '')))::json->'userId')::text as userId
+        //             from transactions
+        //             where genesis_block_hash = 'cd459dc0fafdd5902c7c51f9276e910b24b2db0cab001b85a1646a140552caf0'
+        //             and chaincodename = 'fingerprint3'
+        //             and createdt >= '20180816'
+        //             and createdt < '20180917'
+        //             --and trim (both '"' from (replace((replace(write_set::text,'\u0000','')::json->0->'set'->0->'value')::text, '\', '')))::jsonb @> '{"objectName": "testfile.txt"}'::jsonb
+        //             )
+        //      select distinct on (transactions.objectName, transactions.userId)
+        //             blockid, txhash, createdt, chaincodename, genesis_block_hash, creator_msp_id,
+        //             trim (both '"' from (replace((replace(write_set::text,'\u0000','')::json->0->'set'->0->'value')::text, '\', '')))::json
+        //             from
+        //             transactions
+        //             order by transactions.objectName, transactions.userId, blockid desc
+        //             limit 10
+        //             offset (10*(1-1))
+        //             ;
+        let sqlTxByTime;
+        if (objectName === undefined || objectName === '' || objectName === null) {
+            sqlTxByTime = `
+        select * from (
+        with transactions as (
+             select blockid, txhash, createdt, chaincodename, genesis_block_hash, creator_msp_id, write_set,
+                    (trim (both '"' from (replace((replace(write_set::text,'\\u0000','')::json->0->'set'->0->'value')::text, '\\', '')))::json->'objectName')::text as objectName,
+                    (trim (both '"' from (replace((replace(write_set::text,'\\u0000','')::json->0->'set'->0->'value')::text, '\\', '')))::json->'userId')::text as userId
+                    from transactions
+                    where genesis_block_hash = '${channelName}'
+                    and chaincodename = '${chaincodeName}'
+                    and createdt >= '${start}'
+                    and createdt < '${end}'
+                    )
+             select distinct on (transactions.objectName, transactions.userId)
+                    blockid, txhash, createdt, chaincodename, genesis_block_hash, creator_msp_id,
+                    trim (both '"' from (replace((replace(write_set::text,'\\u0000','')::json->0->'set'->0->'value')::text, '\\', '')))::json as metadata
+                    from
+                    transactions
+                    order by transactions.objectName, transactions.userId, blockid desc
+        ) as t
+        order by blockid desc
+        limit ${pagesize}
+        offset (${pagesize}*(${pagenum}-1))
+        ;`;
+        } else {
+            sqlTxByTime = `
+        select * from (
+        with transactions as (
+             select blockid, txhash, createdt, chaincodename, genesis_block_hash, creator_msp_id, write_set,
+                    (trim (both '"' from (replace((replace(write_set::text,'\\u0000','')::json->0->'set'->0->'value')::text, '\\', '')))::json->'objectName')::text as objectName,
+                    (trim (both '"' from (replace((replace(write_set::text,'\\u0000','')::json->0->'set'->0->'value')::text, '\\', '')))::json->'userId')::text as userId
+                    from transactions
+                    where genesis_block_hash = '${channelName}'
+                    and chaincodename = '${chaincodeName}'
+                    and createdt >= '${start}'
+                    and createdt < '${end}'
+                    and trim (both '"' from (replace((replace(write_set::text,'\\u0000','')::json->0->'set'->0->'value')::text, '\\', '')))::jsonb @> '{"objectName": "${objectName}"}'::jsonb
+                    )
+             select distinct on (transactions.objectName, transactions.userId)
+                    blockid, txhash, createdt, chaincodename, genesis_block_hash, creator_msp_id,
+                    trim (both '"' from (replace((replace(write_set::text,'\\u0000','')::json->0->'set'->0->'value')::text, '\\', '')))::json as metadata
+                    from
+                    transactions
+                    order by transactions.objectName, transactions.userId, blockid desc
+        ) as t
+        order by blockid desc
+        limit ${pagesize}
+        offset (${pagesize}*(${pagenum}-1))
+        ;`;
+        }
+
+        logger.info('sqlTxByTime=', sqlTxByTime);
+
+        return sql.getRowsBySQlQuery(sqlTxByTime);
+    }
+
     // block metrics API
 
     getGenesisBlockFromDB(channelName) {
@@ -245,7 +400,7 @@ class MetricService {
               and blocknum = 0
             ; `;
 
-        logger.info("sqlGenesisBlock=", sqlGenesisBlock);
+        logger.info('sqlGenesisBlock=', sqlGenesisBlock);
 
         return sql.getRowsBySQlQuery(sqlGenesisBlock);
     }
@@ -261,10 +416,10 @@ class MetricService {
             from blocks
             where genesis_block_hash = '${channelName}'
               and createdt >= '${start}'
-              and createdt <= '${end}'
+              and createdt < '${end}'
               ; `;
 
-        logger.info("sqlCountByTime=", sqlCountByTime);
+        logger.info('sqlCountByTime=', sqlCountByTime);
 
         return sql.getRowsBySQlQuery(sqlCountByTime);
     }
@@ -272,22 +427,34 @@ class MetricService {
     getBlocksByTime(channelName, start, end, pagesize, pagenum) {
         // select blocknum, txcount, createdt, blockhash
         // from blocks
-        // where genesis_block_hash = '87dafea1872f64a6ff20b1c728c81d000a40ffa28f3193ab8ba84907a38d3c3f'
-        // and createdt >= '20180725'
-        // and createdt <= '20180727'
-        // and blocknum <= (select max(blocknum) from blocks where genesis_block_hash = '87dafea1872f64a6ff20b1c728c81d000a40ffa28f3193ab8ba84907a38d3c3f')-10*(1-1)
+        // where genesis_block_hash = 'cd459dc0fafdd5902c7c51f9276e910b24b2db0cab001b85a1646a140552caf0'
+        // and blocknum <= (
+        //     select max(blocknum)
+        //     from blocks
+        //     where genesis_block_hash = 'cd459dc0fafdd5902c7c51f9276e910b24b2db0cab001b85a1646a140552caf0'
+        //     and createdt >= '20180816'
+        //     and createdt < '20180817'
+        //     )-10*(1-1)
+        // and createdt >= '20180816'
+        // and createdt < '20180817'
         // order by blocknum desc
         // limit 10;
         let sqlByTime = ` select blocknum, txcount, createdt, blockhash
             from blocks
             where genesis_block_hash = '${channelName}'
+              and blocknum <= (
+                  select max(blocknum)
+                  from blocks
+                  where genesis_block_hash = '${channelName}'
+                  and createdt >= '${start}'
+                  and createdt < '${end}'
+                  )-${pagesize}*(${pagenum}-1)
               and createdt >= '${start}'
-              and createdt <= '${end}'
-              and blocknum <= (select max(blocknum) from blocks where genesis_block_hash = '${channelName}')-${pagesize}*(${pagenum}-1)
+              and createdt < '${end}'
             order by blocknum desc
             limit ${pagesize} ; `;
 
-        logger.info("sqlByTime=", sqlByTime);
+        logger.info('sqlByTime=', sqlByTime);
 
         return sql.getRowsBySQlQuery(sqlByTime);
     }

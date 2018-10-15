@@ -178,6 +178,22 @@ class BlockScanner {
                         'set': i.rwset.writes
                     }
                 })
+
+                // parse writeSet, and remove /u0000
+                for (let i in writeSet) {
+                    // logger.info('writeSet.chaincode=', writeSet[i].chaincode);
+                    if (writeSet[i].chaincode === 'fingerprint') {
+                        // logger.info('i=', i);
+                        // logger.info('writeSet=', writeSet[i]);
+                        // logger.info('writeSet.set[0].key=', writeSet[i].set[0].key);
+                        let strKey = writeSet[i].set[0].key;
+                        // logger.info('strKey=', strKey);
+                        strKey = strKey.replace(/\0/g, '');
+                        // logger.info('strKey=', strKey);
+                        writeSet[i].set[0].key = strKey;
+                    }
+                }
+
                 chaincodeID =
                     new Uint8Array(txObj.payload.data.actions[0].payload.action.proposal_response_payload.extension);
                 status = txObj.payload.data.actions[0].payload.action.proposal_response_payload.extension.response.status;
